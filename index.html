@@ -16,7 +16,7 @@
       max-width: 600px;
     }
 
-    input[type="file"] {
+    input[type="file"], select {
       padding: 10px;
       margin-bottom: 20px;
     }
@@ -35,16 +35,31 @@
     <input type="file" id="fileInput" accept=".csv" />
     <button id="uploadBtn" disabled>Upload CSV</button>
 
+    <!-- Date Range Selection -->
+    <div id="dateRangeSection" style="display: none;">
+      <h3>Select Date Range</h3>
+      <label for="startDate">From:</label>
+      <input type="date" id="startDate">
+      <label for="endDate">To:</label>
+      <input type="date" id="endDate">
+      <button id="filterBtn">Apply Filter</button>
+    </div>
+
     <!-- Confirmation Message -->
     <div id="confirmationMessage" class="message"></div>
+
   </div>
 
   <script>
-    // JavaScript to handle file upload and confirmation
-
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const confirmationMessage = document.getElementById("confirmationMessage");
+    const dateRangeSection = document.getElementById("dateRangeSection");
+    const startDateInput = document.getElementById("startDate");
+    const endDateInput = document.getElementById("endDate");
+    const filterBtn = document.getElementById("filterBtn");
+
+    let csvData = [];
 
     // Enable the upload button when a file is selected
     fileInput.addEventListener("change", function () {
@@ -55,22 +70,70 @@
       }
     });
 
-    // Simulate file upload when button is clicked
+    // Handle file upload
     uploadBtn.addEventListener("click", function () {
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
+      const file = fileInput.files[0];
+      
+      if (file.type === "text/csv") {
+        const reader = new FileReader();
 
-        // Check if the selected file is a CSV
-        if (file.type === "text/csv") {
-          // Simulate the file upload process
-          confirmationMessage.innerHTML = `File "<strong>${file.name}</strong>" uploaded successfully. Ready for filtering.`;
+        reader.onload = function (e) {
+          const text = e.target.result;
+          parseCSV(text); // Parse the CSV content
+
+          confirmationMessage.innerHTML = `File "<strong>${file.name}</strong>" uploaded successfully. Please select a date range.`;
           confirmationMessage.style.color = "green";
-        } else {
-          confirmationMessage.innerHTML = "Please upload a valid CSV file.";
-          confirmationMessage.style.color = "red";
-        }
+
+          // Show date range selection
+          dateRangeSection.style.display = "block";
+        };
+
+        reader.readAsText(file); // Read the file content
       } else {
-        confirmationMessage.innerHTML = "No file selected.";
+        confirmationMessage.innerHTML = "Please upload a valid CSV file.";
+        confirmationMessage.style.color = "red";
+      }
+    });
+
+    // Parse the CSV file and extract the dates from Column B
+    function parseCSV(csvText) {
+      const lines = csvText.split("\n");
+      csvData = lines.map(line => line.split(","));
+      
+      // Assuming first row is the header and dates are in Column B (index 1)
+      const dateColumn = csvData.slice(1).map(row => row[1]);
+
+      // Filter out empty or invalid dates
+      const validDates = dateColumn.filter(date => new Date(date) != "Invalid Date").map(date => new Date(date));
+
+      // Find the min and max date for the date range
+      const minDate = new Date(Math.min(...validDates));
+      const maxDate = new Date(Math.max(...validDates));
+
+      // Set the min and max dates in the date inputs
+      startDateInput.min = minDate.toISOString().split("T")[0];
+      startDateInput.max = maxDate.toISOString().split("T")[0];
+      endDateInput.min = minDate.toISOString().split("T")[0];
+      endDateInput.max = maxDate.toISOString().split("T")[0];
+    }
+
+    // Handle the filter button click
+    filterBtn.addEventListener("click", function () {
+      const startDate = new Date(startDateInput.value);
+      const endDate = new Date(endDateInput.value);
+
+      if (startDate && endDate && startDate <= endDate) {
+        // Filter the data based on the selected date range
+        const filteredData = csvData.filter(row => {
+          const date = new Date(row[1]);
+          return date >= startDate && date <= endDate;
+        });
+
+        console.log("Filtered Data:", filteredData);
+        confirmationMessage.innerHTML = `Data filtered between ${startDate.toDateString()} and ${endDate.toDateString()}.`;
+        confirmationMessage.style.color = "blue";
+      } else {
+        confirmationMessage.innerHTML = "Please select a valid date range.";
         confirmationMessage.style.color = "red";
       }
     });
