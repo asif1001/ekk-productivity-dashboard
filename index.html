@@ -16,14 +16,44 @@
       max-width: 600px;
     }
 
-    input[type="file"], select {
+    input[type="file"], select, button {
       padding: 10px;
       margin-bottom: 20px;
+    }
+
+    table {
+      margin-top: 20px;
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table, th, td {
+      border: 1px solid black;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
     }
 
     .message {
       margin-top: 20px;
       color: green;
+    }
+
+    .high {
+      background-color: green;
+      color: white;
+    }
+
+    .medium {
+      background-color: orange;
+      color: white;
+    }
+
+    .low {
+      background-color: red;
+      color: white;
     }
   </style>
 </head>
@@ -42,12 +72,30 @@
       <input type="date" id="startDate">
       <label for="endDate">To:</label>
       <input type="date" id="endDate">
-      <button id="filterBtn">Apply Filter</button>
+      <button id="filterBtn">Apply Date Filter</button>
+    </div>
+
+    <!-- Report Type Selection -->
+    <div id="reportSection" style="display: none;">
+      <h3>Select Report Type</h3>
+      <button id="productivityBtn">Productivity Report</button>
+      <button id="overtimeBtn">Overtime Report</button>
     </div>
 
     <!-- Confirmation Message -->
     <div id="confirmationMessage" class="message"></div>
 
+    <!-- Pivot Table Section -->
+    <div id="pivotTableSection" style="display: none;">
+      <h3>Productivity Report</h3>
+      <table id="pivotTable"></table>
+    </div>
+
+    <!-- Admin Report Section -->
+    <div id="adminReportSection" style="display: none;">
+      <h3>Admin Overtime Report</h3>
+      <table id="adminReportTable"></table>
+    </div>
   </div>
 
   <script>
@@ -55,9 +103,11 @@
     const uploadBtn = document.getElementById("uploadBtn");
     const confirmationMessage = document.getElementById("confirmationMessage");
     const dateRangeSection = document.getElementById("dateRangeSection");
+    const reportSection = document.getElementById("reportSection");
     const startDateInput = document.getElementById("startDate");
     const endDateInput = document.getElementById("endDate");
-    const filterBtn = document.getElementById("filterBtn");
+    const pivotTableSection = document.getElementById("pivotTableSection");
+    const adminReportSection = document.getElementById("adminReportSection");
 
     let csvData = [];
 
@@ -73,7 +123,7 @@
     // Handle file upload
     uploadBtn.addEventListener("click", function () {
       const file = fileInput.files[0];
-      
+
       if (file.type === "text/csv") {
         const reader = new FileReader();
 
@@ -95,47 +145,49 @@
       }
     });
 
-    // Parse the CSV file and extract the dates from Column B
+    // Parse the CSV file and extract the data
     function parseCSV(csvText) {
       const lines = csvText.split("\n");
       csvData = lines.map(line => line.split(","));
       
-      // Assuming first row is the header and dates are in Column B (index 1)
-      const dateColumn = csvData.slice(1).map(row => row[1]);
-
-      // Filter out empty or invalid dates
-      const validDates = dateColumn.filter(date => new Date(date) != "Invalid Date").map(date => new Date(date));
-
-      // Find the min and max date for the date range
-      const minDate = new Date(Math.min(...validDates));
-      const maxDate = new Date(Math.max(...validDates));
-
-      // Set the min and max dates in the date inputs
-      startDateInput.min = minDate.toISOString().split("T")[0];
-      startDateInput.max = maxDate.toISOString().split("T")[0];
-      endDateInput.min = minDate.toISOString().split("T")[0];
-      endDateInput.max = maxDate.toISOString().split("T")[0];
+      // Assuming first row is the header
+      const header = csvData[0];
+      csvData = csvData.slice(1); // Skip header row
     }
 
-    // Handle the filter button click
-    filterBtn.addEventListener("click", function () {
+    // Filter the data and prepare the report
+    function generatePivotTable() {
+      // TODO: Add pivot table generation logic here
+    }
+
+    function generateOvertimeReport() {
+      // TODO: Add overtime report generation logic here
+    }
+
+    // Show the report options after applying the date filter
+    document.getElementById("filterBtn").addEventListener("click", function () {
       const startDate = new Date(startDateInput.value);
       const endDate = new Date(endDateInput.value);
 
       if (startDate && endDate && startDate <= endDate) {
-        // Filter the data based on the selected date range
-        const filteredData = csvData.filter(row => {
-          const date = new Date(row[1]);
-          return date >= startDate && date <= endDate;
-        });
-
-        console.log("Filtered Data:", filteredData);
-        confirmationMessage.innerHTML = `Data filtered between ${startDate.toDateString()} and ${endDate.toDateString()}.`;
+        confirmationMessage.innerHTML = "Date filter applied. Select a report type.";
         confirmationMessage.style.color = "blue";
+        reportSection.style.display = "block";
       } else {
         confirmationMessage.innerHTML = "Please select a valid date range.";
         confirmationMessage.style.color = "red";
       }
+    });
+
+    // Generate the selected report
+    document.getElementById("productivityBtn").addEventListener("click", function () {
+      pivotTableSection.style.display = "block";
+      generatePivotTable();
+    });
+
+    document.getElementById("overtimeBtn").addEventListener("click", function () {
+      adminReportSection.style.display = "block";
+      generateOvertimeReport();
     });
   </script>
 </body>
