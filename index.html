@@ -50,7 +50,11 @@
     <!-- Warehouse Selection -->
     <div id="warehouseSection" style="display: none;">
       <h3>Select Warehouse Location</h3>
-      <select id="warehouseSelect"></select>
+      <select id="warehouseSelect">
+        <option value="OT CPD Salmabad">CPD Salmabad</option>
+        <option value="OT Global - Tubli">Global Warehouse</option>
+        <option value="OT Global - Manama">Manama</option>
+      </select>
     </div>
 
     <!-- Date Range Selection -->
@@ -123,7 +127,6 @@
 
           // Show warehouse selection section
           warehouseSection.style.display = "block";
-          populateWarehouseSelect();
         };
 
         reader.readAsText(file); // Read the file content
@@ -138,27 +141,6 @@
       const lines = csvText.split("\n");
       headers = lines[0].split(",");
       csvData = lines.slice(1).map(line => line.split(","));
-
-      // Assuming headers are present in the first row
-      console.log("Headers:", headers);
-    }
-
-    // Populate warehouse selection (Column D)
-    function populateWarehouseSelect() {
-      const warehouseIndex = headers.indexOf("Warehouse"); // Assuming "Warehouse" is the header name
-      const uniqueWarehouses = [...new Set(csvData.map(row => row[warehouseIndex]))];
-
-      uniqueWarehouses.forEach(warehouse => {
-        const option = document.createElement("option");
-        option.value = warehouse;
-        option.text = warehouse;
-        warehouseSelect.appendChild(option);
-      });
-
-      // Show date range selection once warehouse is selected
-      warehouseSelect.addEventListener("change", function () {
-        dateRangeSection.style.display = "block";
-      });
     }
 
     // Filter data by date range and warehouse, then calculate productivity
