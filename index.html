@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Productivity Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      margin: 50px auto;
+      max-width: 600px;
+    }
+
+    input[type="file"] {
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+
+    .message {
+      margin-top: 20px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload Staff Productivity CSV</h1>
+
+    <!-- CSV File Upload Form -->
+    <input type="file" id="fileInput" accept=".csv" />
+    <button id="uploadBtn" disabled>Upload CSV</button>
+
+    <!-- Confirmation Message -->
+    <div id="confirmationMessage" class="message"></div>
+  </div>
+
+  <script>
+    // JavaScript to handle file upload and confirmation
+
+    const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const confirmationMessage = document.getElementById("confirmationMessage");
+
+    // Enable the upload button when a file is selected
+    fileInput.addEventListener("change", function () {
+      if (fileInput.files.length > 0) {
+        uploadBtn.disabled = false;
+      } else {
+        uploadBtn.disabled = true;
+      }
+    });
+
+    // Simulate file upload when button is clicked
+    uploadBtn.addEventListener("click", function () {
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+
+        // Check if the selected file is a CSV
+        if (file.type === "text/csv") {
+          // Simulate the file upload process
+          confirmationMessage.innerHTML = `File "<strong>${file.name}</strong>" uploaded successfully. Ready for filtering.`;
+          confirmationMessage.style.color = "green";
+        } else {
+          confirmationMessage.innerHTML = "Please upload a valid CSV file.";
+          confirmationMessage.style.color = "red";
+        }
+      } else {
+        confirmationMessage.innerHTML = "No file selected.";
+        confirmationMessage.style.color = "red";
+      }
+    });
+  </script>
+</body>
+</html>
