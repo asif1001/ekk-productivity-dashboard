@@ -13,25 +13,22 @@
 
     .container {
       margin: 50px auto;
-      max-width: 600px;
+      max-width: 800px;
     }
 
-    input[type="file"], select, button {
+    input[type="file"], select, button, input[type="date"] {
       padding: 10px;
-      margin-bottom: 20px;
+      margin: 10px;
     }
 
     table {
-      margin-top: 20px;
       width: 100%;
       border-collapse: collapse;
-    }
-
-    table, th, td {
-      border: 1px solid black;
+      margin-top: 20px;
     }
 
     th, td {
+      border: 1px solid black;
       padding: 10px;
       text-align: center;
     }
@@ -39,21 +36,6 @@
     .message {
       margin-top: 20px;
       color: green;
-    }
-
-    .high {
-      background-color: green;
-      color: white;
-    }
-
-    .medium {
-      background-color: orange;
-      color: white;
-    }
-
-    .low {
-      background-color: red;
-      color: white;
     }
   </style>
 </head>
@@ -65,6 +47,12 @@
     <input type="file" id="fileInput" accept=".csv" />
     <button id="uploadBtn" disabled>Upload CSV</button>
 
+    <!-- Warehouse Selection -->
+    <div id="warehouseSection" style="display: none;">
+      <h3>Select Warehouse Location</h3>
+      <select id="warehouseSelect"></select>
+    </div>
+
     <!-- Date Range Selection -->
     <div id="dateRangeSection" style="display: none;">
       <h3>Select Date Range</h3>
@@ -72,29 +60,25 @@
       <input type="date" id="startDate">
       <label for="endDate">To:</label>
       <input type="date" id="endDate">
-      <button id="filterBtn">Apply Date Filter</button>
-    </div>
-
-    <!-- Report Type Selection -->
-    <div id="reportSection" style="display: none;">
-      <h3>Select Report Type</h3>
-      <button id="productivityBtn">Productivity Report</button>
-      <button id="overtimeBtn">Overtime Report</button>
+      <button id="filterBtn">Apply Filters</button>
     </div>
 
     <!-- Confirmation Message -->
     <div id="confirmationMessage" class="message"></div>
 
-    <!-- Pivot Table Section -->
-    <div id="pivotTableSection" style="display: none;">
+    <!-- Productivity Report Table -->
+    <div id="productivityReportSection" style="display: none;">
       <h3>Productivity Report</h3>
-      <table id="pivotTable"></table>
-    </div>
-
-    <!-- Admin Report Section -->
-    <div id="adminReportSection" style="display: none;">
-      <h3>Admin Overtime Report</h3>
-      <table id="adminReportTable"></table>
+      <table id="productivityTable">
+        <thead>
+          <tr>
+            <th>Employee No</th>
+            <th>Employee Name</th>
+            <th>Total Productivity</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
 
@@ -102,14 +86,17 @@
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const confirmationMessage = document.getElementById("confirmationMessage");
+    const warehouseSection = document.getElementById("warehouseSection");
+    const warehouseSelect = document.getElementById("warehouseSelect");
     const dateRangeSection = document.getElementById("dateRangeSection");
-    const reportSection = document.getElementById("reportSection");
     const startDateInput = document.getElementById("startDate");
     const endDateInput = document.getElementById("endDate");
-    const pivotTableSection = document.getElementById("pivotTableSection");
-    const adminReportSection = document.getElementById("adminReportSection");
+    const filterBtn = document.getElementById("filterBtn");
+    const productivityReportSection = document.getElementById("productivityReportSection");
+    const productivityTable = document.getElementById("productivityTable").querySelector("tbody");
 
     let csvData = [];
+    let headers = [];
 
     // Enable the upload button when a file is selected
     fileInput.addEventListener("change", function () {
@@ -120,7 +107,7 @@
       }
     });
 
-    // Handle file upload
+    // Handle file upload and parse CSV
     uploadBtn.addEventListener("click", function () {
       const file = fileInput.files[0];
 
@@ -131,11 +118,12 @@
           const text = e.target.result;
           parseCSV(text); // Parse the CSV content
 
-          confirmationMessage.innerHTML = `File "<strong>${file.name}</strong>" uploaded successfully. Please select a date range.`;
+          confirmationMessage.innerHTML = `File "<strong>${file.name}</strong>" uploaded successfully. Please select a warehouse location.`;
           confirmationMessage.style.color = "green";
 
-          // Show date range selection
-          dateRangeSection.style.display = "block";
+          // Show warehouse selection section
+          warehouseSection.style.display = "block";
+          populateWarehouseSelect();
         };
 
         reader.readAsText(file); // Read the file content
@@ -148,47 +136,91 @@
     // Parse the CSV file and extract the data
     function parseCSV(csvText) {
       const lines = csvText.split("\n");
-      csvData = lines.map(line => line.split(","));
-      
-      // Assuming first row is the header
-      const header = csvData[0];
-      csvData = csvData.slice(1); // Skip header row
+      headers = lines[0].split(",");
+      csvData = lines.slice(1).map(line => line.split(","));
+
+      // Assuming headers are present in the first row
+      console.log("Headers:", headers);
     }
 
-    // Filter the data and prepare the report
-    function generatePivotTable() {
-      // TODO: Add pivot table generation logic here
+    // Populate warehouse selection (Column D)
+    function populateWarehouseSelect() {
+      const warehouseIndex = headers.indexOf("Warehouse"); // Assuming "Warehouse" is the header name
+      const uniqueWarehouses = [...new Set(csvData.map(row => row[warehouseIndex]))];
+
+      uniqueWarehouses.forEach(warehouse => {
+        const option = document.createElement("option");
+        option.value = warehouse;
+        option.text = warehouse;
+        warehouseSelect.appendChild(option);
+      });
+
+      // Show date range selection once warehouse is selected
+      warehouseSelect.addEventListener("change", function () {
+        dateRangeSection.style.display = "block";
+      });
     }
 
-    function generateOvertimeReport() {
-      // TODO: Add overtime report generation logic here
-    }
-
-    // Show the report options after applying the date filter
-    document.getElementById("filterBtn").addEventListener("click", function () {
+    // Filter data by date range and warehouse, then calculate productivity
+    filterBtn.addEventListener("click", function () {
+      const selectedWarehouse = warehouseSelect.value;
       const startDate = new Date(startDateInput.value);
       const endDate = new Date(endDateInput.value);
 
-      if (startDate && endDate && startDate <= endDate) {
-        confirmationMessage.innerHTML = "Date filter applied. Select a report type.";
-        confirmationMessage.style.color = "blue";
-        reportSection.style.display = "block";
-      } else {
-        confirmationMessage.innerHTML = "Please select a valid date range.";
-        confirmationMessage.style.color = "red";
-      }
+      const dateIndex = headers.indexOf("Date"); // Assuming "Date" is the header name
+      const warehouseIndex = headers.indexOf("Warehouse");
+      const employeeIndex = headers.indexOf("Emp. No - Name");
+      const productivityColumns = [...headers.slice(headers.indexOf("R"), headers.indexOf("BA") + 1), ...headers.slice(headers.indexOf("BD"), headers.indexOf("BE") + 1)];
+
+      const filteredData = csvData.filter(row => {
+        const date = new Date(row[dateIndex]);
+        const warehouse = row[warehouseIndex];
+
+        return date >= startDate && date <= endDate && warehouse === selectedWarehouse;
+      });
+
+      const productivityByEmployee = {};
+
+      filteredData.forEach(row => {
+        const [empNo, empName] = row[employeeIndex].split(" - ");
+        const productivityValues = productivityColumns.map(col => parseFloat(row[headers.indexOf(col)]) || 0);
+        const totalProductivity = productivityValues.reduce((acc, val) => acc + val, 0);
+
+        if (!productivityByEmployee[empNo]) {
+          productivityByEmployee[empNo] = { empName, totalProductivity };
+        } else {
+          productivityByEmployee[empNo].totalProductivity += totalProductivity;
+        }
+      });
+
+      generateProductivityReport(productivityByEmployee);
     });
 
-    // Generate the selected report
-    document.getElementById("productivityBtn").addEventListener("click", function () {
-      pivotTableSection.style.display = "block";
-      generatePivotTable();
-    });
+    // Generate the productivity report table
+    function generateProductivityReport(productivityData) {
+      productivityTable.innerHTML = ''; // Clear previous data
 
-    document.getElementById("overtimeBtn").addEventListener("click", function () {
-      adminReportSection.style.display = "block";
-      generateOvertimeReport();
-    });
+      Object.entries(productivityData).forEach(([empNo, { empName, totalProductivity }]) => {
+        const row = document.createElement("tr");
+
+        const empNoCell = document.createElement("td");
+        empNoCell.innerText = empNo;
+        row.appendChild(empNoCell);
+
+        const empNameCell = document.createElement("td");
+        empNameCell.innerText = empName;
+        row.appendChild(empNameCell);
+
+        const totalProductivityCell = document.createElement("td");
+        totalProductivityCell.innerText = totalProductivity;
+        row.appendChild(totalProductivityCell);
+
+        productivityTable.appendChild(row);
+      });
+
+      // Show the productivity report section
+      productivityReportSection.style.display = "block";
+    }
   </script>
 </body>
 </html>
