@@ -1,68 +1,51 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-from datetime import datetime
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSV Dashboard</title>
 
-# Function to process data
-def process_data(data, warehouse, start_date, end_date):
-    # Ensure the Date column is in the right format
-    try:
-        data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
-    except Exception as e:
-        st.error(f"Error parsing dates: {e}")
-        return pd.DataFrame()
+  <!-- Include CDN links for libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    # Filter by warehouse location
-    filtered_data = data[data['Warehouse Location'] == warehouse]
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
 
-    # Filter by date range
-    filtered_data = filtered_data[(filtered_data['Date'] >= start_date) & (filtered_data['Date'] <= end_date)]
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
 
-    # Add a Month column for monthly grouping
-    filtered_data['Month'] = filtered_data['Date'].dt.to_period('M')
+    #chart {
+      width: 100%;
+      height: 400px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CSV Data Dashboard</h1>
 
-    # Group by employee and month, summing the Total Productivity
-    productivity_data = filtered_data.groupby(['Emp. No - Name', 'Month'])['Total_Pro'].sum().reset_index()
+    <!-- File Upload Input -->
+    <input type="file" id="csvFileInput" accept=".csv" />
+    <button onclick="uploadCSV()">Upload CSV</button>
 
-    return productivity_data
+    <!-- Table to display CSV Data -->
+    <h2>CSV Data:</h2>
+    <table id="csvTable" border="1">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
 
-# Streamlit interface
-st.title("Warehouse Productivity & Overtime Dashboard")
+    <!-- Graph to display the data -->
+    <h2>Graph:</h2>
+    <canvas id="chart"></canvas>
+  </div>
 
-# File upload
-uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-if uploaded_file is not None:
-    try:
-        # Read the CSV file
-        data = pd.read_csv(uploaded_file)
-
-        # Ensure required columns exist
-        required_columns = ['Warehouse Location', 'Date', 'Total_Pro']
-        if not all(col in data.columns for col in required_columns):
-            st.error("Uploaded file is missing required columns: 'Warehouse Location', 'Date', 'Total_Pro'")
-        else:
-            # Select date range
-            start_date = st.date_input("Start date", datetime(2023, 1, 1))
-            end_date = st.date_input("End date", datetime(2023, 12, 31))
-
-            # Select warehouse location
-            warehouse = st.selectbox("Select Warehouse Location", data['Warehouse Location'].unique())
-
-            # Process data
-            if st.button("Generate Report"):
-                productivity_data = process_data(data, warehouse, start_date, end_date)
-
-                if not productivity_data.empty:
-                    # Create a bar chart of total productivity for each staff
-                    fig = px.bar(productivity_data, 
-                                 x='Month', 
-                                 y='Total_Pro', 
-                                 color='Emp. No - Name', 
-                                 title=f"Monthly Total Productivity of Each Staff in {warehouse}",
-                                 labels={'Total_Pro': 'Total Productivity', 'Emp. No - Name': 'Employee'})
-
-                    st.plotly_chart(fig)
-                else:
-                    st.error("No data to display based on your filters.")
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+  <script src="script.js"></script>
+</body>
+</html>
