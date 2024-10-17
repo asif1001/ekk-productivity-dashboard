@@ -37,7 +37,8 @@ if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
 
         # Ensure required columns exist
-        if 'Warehouse Location' not in data.columns or 'Date' not in data.columns or 'Total_Pro' not in data.columns:
+        required_columns = ['Warehouse Location', 'Date', 'Total_Pro']
+        if not all(col in data.columns for col in required_columns):
             st.error("Uploaded file is missing required columns: 'Warehouse Location', 'Date', 'Total_Pro'")
         else:
             # Select date range
