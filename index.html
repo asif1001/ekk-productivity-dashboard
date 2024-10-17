@@ -1,208 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Staff Productivity Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .container {
-      margin: 50px auto;
-      max-width: 800px;
-    }
-
-    input[type="file"], select, button, input[type="date"] {
-      padding: 10px;
-      margin: 10px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      border: 1px solid black;
-      padding: 10px;
-      text-align: center;
-    }
-
-    .message {
-      margin-top: 20px;
-      color: green;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Productivity & Overtime Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        a {
+            text-decoration: none;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+        a:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Upload Staff Productivity CSV</h1>
+    <h1>Warehouse Productivity & Overtime Dashboard</h1>
+    <p>Click the button below to view the interactive dashboard.</p>
+    
+    <!-- Link to your hosted dashboard (Streamlit, Tableau, etc.) -->
+    <a href="https://your-dashboard-url.com" target="_blank">Open Dashboard</a>
 
-    <!-- CSV File Upload Form -->
-    <input type="file" id="fileInput" accept=".csv" />
-    <button id="uploadBtn" disabled>Upload CSV</button>
-
-    <!-- Warehouse Selection -->
-    <div id="warehouseSection" style="display: none;">
-      <h3>Select Warehouse Location</h3>
-      <select id="warehouseSelect">
-        <option value="OT CPD Salmabad">CPD Salmabad</option>
-        <option value="OT Global - Tubli">Global Warehouse</option>
-        <option value="OT Global - Manama">Manama</option>
-      </select>
-    </div>
-
-    <!-- Date Range Selection -->
-    <div id="dateRangeSection" style="display: none;">
-      <h3>Select Date Range</h3>
-      <label for="startDate">From:</label>
-      <input type="date" id="startDate">
-      <label for="endDate">To:</label>
-      <input type="date" id="endDate">
-      <button id="filterBtn">Apply Filters</button>
-    </div>
-
-    <!-- Confirmation Message -->
-    <div id="confirmationMessage" class="message"></div>
-
-    <!-- Productivity Report Table -->
-    <div id="productivityReportSection" style="display: none;">
-      <h3>Productivity Report</h3>
-      <table id="productivityTable">
-        <thead>
-          <tr>
-            <th>Employee No</th>
-            <th>Employee Name</th>
-            <th>Total Productivity</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-
-  <script>
-    const fileInput = document.getElementById("fileInput");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const confirmationMessage = document.getElementById("confirmationMessage");
-    const warehouseSection = document.getElementById("warehouseSection");
-    const warehouseSelect = document.getElementById("warehouseSelect");
-    const dateRangeSection = document.getElementById("dateRangeSection");
-    const startDateInput = document.getElementById("startDate");
-    const endDateInput = document.getElementById("endDate");
-    const filterBtn = document.getElementById("filterBtn");
-    const productivityReportSection = document.getElementById("productivityReportSection");
-    const productivityTable = document.getElementById("productivityTable").querySelector("tbody");
-
-    let csvData = [];
-    let headers = [];
-
-    // Enable the upload button when a file is selected
-    fileInput.addEventListener("change", function () {
-      if (fileInput.files.length > 0) {
-        uploadBtn.disabled = false;
-      } else {
-        uploadBtn.disabled = true;
-      }
-    });
-
-    // Handle file upload and parse CSV
-    uploadBtn.addEventListener("click", function () {
-      const file = fileInput.files[0];
-
-      if (file.type === "text/csv") {
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-          const text = e.target.result;
-          parseCSV(text); // Parse the CSV content
-
-          confirmationMessage.innerHTML = `File "<strong>${file.name}</strong>" uploaded successfully. Please select a warehouse location.`;
-          confirmationMessage.style.color = "green";
-
-          // Show warehouse selection section
-          warehouseSection.style.display = "block";
-        };
-
-        reader.readAsText(file); // Read the file content
-      } else {
-        confirmationMessage.innerHTML = "Please upload a valid CSV file.";
-        confirmationMessage.style.color = "red";
-      }
-    });
-
-    // Parse the CSV file and extract the data
-    function parseCSV(csvText) {
-      const lines = csvText.split("\n");
-      headers = lines[0].split(",");
-      csvData = lines.slice(1).map(line => line.split(","));
-    }
-
-    // Filter data by date range and warehouse, then calculate productivity
-    filterBtn.addEventListener("click", function () {
-      const selectedWarehouse = warehouseSelect.value;
-      const startDate = new Date(startDateInput.value);
-      const endDate = new Date(endDateInput.value);
-
-      const dateIndex = headers.indexOf("Date"); // Assuming "Date" is the header name
-      const warehouseIndex = headers.indexOf("Warehouse");
-      const employeeIndex = headers.indexOf("Emp. No - Name");
-      const productivityColumns = [...headers.slice(headers.indexOf("R"), headers.indexOf("BA") + 1), ...headers.slice(headers.indexOf("BD"), headers.indexOf("BE") + 1)];
-
-      const filteredData = csvData.filter(row => {
-        const date = new Date(row[dateIndex]);
-        const warehouse = row[warehouseIndex];
-
-        return date >= startDate && date <= endDate && warehouse === selectedWarehouse;
-      });
-
-      const productivityByEmployee = {};
-
-      filteredData.forEach(row => {
-        const [empNo, empName] = row[employeeIndex].split(" - ");
-        const productivityValues = productivityColumns.map(col => parseFloat(row[headers.indexOf(col)]) || 0);
-        const totalProductivity = productivityValues.reduce((acc, val) => acc + val, 0);
-
-        if (!productivityByEmployee[empNo]) {
-          productivityByEmployee[empNo] = { empName, totalProductivity };
-        } else {
-          productivityByEmployee[empNo].totalProductivity += totalProductivity;
-        }
-      });
-
-      generateProductivityReport(productivityByEmployee);
-    });
-
-    // Generate the productivity report table
-    function generateProductivityReport(productivityData) {
-      productivityTable.innerHTML = ''; // Clear previous data
-
-      Object.entries(productivityData).forEach(([empNo, { empName, totalProductivity }]) => {
-        const row = document.createElement("tr");
-
-        const empNoCell = document.createElement("td");
-        empNoCell.innerText = empNo;
-        row.appendChild(empNoCell);
-
-        const empNameCell = document.createElement("td");
-        empNameCell.innerText = empName;
-        row.appendChild(empNameCell);
-
-        const totalProductivityCell = document.createElement("td");
-        totalProductivityCell.innerText = totalProductivity;
-        row.appendChild(totalProductivityCell);
-
-        productivityTable.appendChild(row);
-      });
-
-      // Show the productivity report section
-      productivityReportSection.style.display = "block";
-    }
-  </script>
 </body>
 </html>
